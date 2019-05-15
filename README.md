@@ -105,8 +105,13 @@ View the current app replicas:
 kubectl config set-context $(kubectl config current-context) --namespace=hackathon-pi-knative
 kubectl get pods
 ```
+If there's no requests (and it's been deployed for more than 3 minutes), you should see zero replicas:
+```
+$ kubectl get pods
+No resources found.
+```
 
-Now load the app for 2 minutes using (knative takes a minute to establish avg concurrency):
+Load the app for 2 minutes using (knative takes a minute to establish avg concurrency):
 ```
 cd go/src
 export GOPATH=$(pwd)
