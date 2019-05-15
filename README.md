@@ -45,10 +45,12 @@ docker push <my-dockerhub-username>/myfirstserverlessapp:v0.1
 ```
 kubectl create -f hackathon-pi-knative-ns.yml
 ```
-Alternatively label an existing namespace for Istio Injection
+Alternatively label an existing namespace for Istio Injection.
 ```
 kubectl label namespace <my-namespace> istio-injection=enabled
 ```
+
+_NOTE: For this hackathon the namespace `hackathon-pi-knative` is used._
 
 ### Deploy the app using knative
 ```
