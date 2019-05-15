@@ -13,7 +13,7 @@ What this project contains:
 
 ## PRE-REQS
 
-For building and publishing the container_(optional)_:
+For building and publishing the container _(optional)_:
 - `docker` - to create an app image _(optional)_
 
 For deploying | testing | loading:
