@@ -1,0 +1,16 @@
+apiVersion: serving.knative.dev/v1alpha1
+kind: Configuration
+metadata:
+  name: myfirstserverlessapp
+  namespace: hackathon-pi-knative
+spec:
+  revisionTemplate:
+    metadata:
+      labels:
+        knative.dev/type: container
+    spec:
+      container:
+        image: leggsy/myfirstserverlessapp:v2
+        env:
+          - name: COLOUR
+            value: "green"

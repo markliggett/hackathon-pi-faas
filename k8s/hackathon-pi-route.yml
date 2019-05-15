@@ -1,0 +1,13 @@
+apiVersion: serving.knative.dev/v1alpha1
+kind: Route
+metadata:
+  name: myfirstserverlessapp
+  namespace: hackathon-pi-knative
+spec:
+  traffic:
+  - revisionName: myfirstserverlessapp-gb6rj
+    percent: 100
+    name: v1
+  - revisionName: myfirstserverlessapp-vtf5g
+    percent: 0
+    name: v2

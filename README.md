@@ -85,18 +85,8 @@ curl -H "Host: ${KNATIVE_DOMAIN}" "http://${KNATIVE_HOST}/?in=10000&nap=3&proces
 ```
 
 With a bit of luck the FaaS should respond, eg;
-```
-______                                      _          
-| ___ \                                    (_)         
-| |_/ / __ _ ______ _  __ _ _ ____   _____  _  ___ ___ 
-| ___ \/ _` |_  / _` |/ _` | '__\ \ / / _ \| |/ __/ _ \
-| |_/ / (_| |/ / (_| | (_| | |   \ V / (_) | | (_|  __/
-\____/ \__,_/___\__,_|\__,_|_|    \_/ \___/|_|\___\___|
 
-Method A calculated the highest prime below 10000 as 9973
-Method B napped for 3 seconds
-Method C calculated pi as 3.161199 using 50 processes
-```
+![alt text](images/blue-app.png "Blue coloured app")
 
 ## LOADING
 
@@ -155,3 +145,22 @@ myfirstserverlessapp-9mq4l-deployment-7f5cd97f44-k6gtn   2/3     Terminating    
 myfirstserverlessapp-9mq4l-deployment-7f5cd97f44-rx2sc   2/3     Terminating       0          3m
 myfirstserverlessapp-nhlm8-deployment-6f8d75794f-kzr96   0/3     PodInitializing   0          33s
 ```
+
+//TODO (ML)
+Switch between instance using the a percentage of traffic...
+
+```
+kubectl apply -f k8s/hackathon-pi-config-v1.yml
+get configuration revision from kubectl describe config myfirstserverlessapp
+kubectl apply -f k8s/hackathon-pi-route.yml
+kubectl apply -f k8s/hackathon-pi-config-v2.yml
+get new ready configuration revision from kubectl describe config myfirstserverlessapp
+kubectl edit route adding something like:
+  - revisionName: myfirstserverlessapp-vtf5g
+    percent: 0
+    name: v2
+edit the route again only this time setting the traffic % to 50-50
+send requests using Postman - you can see the logo colour change.
+```
+
+

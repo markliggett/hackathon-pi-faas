@@ -30,8 +30,17 @@ const bvHeader = "\n\n" +
 	"| |_/ / (_| |/ / (_| | (_| | |   \\ V / (_) | | (_|  __/\n" +
 	"\\____/ \\__,_/___\\__,_|\\__,_|_|    \\_/ \\___/|_|\\___\\___|\n\n"
 
+const bvHeaderHtml = "<br><br><pre>" +
+	"______                                      _          <br>" +
+	"| ___ \\                                    (_)         <br>" +
+	"| |_/ / __ _ ______ _  __ _ _ ____   _____  _  ___ ___ <br>" +
+	"| ___ \\/ _` |_  / _` |/ _` | '__\\ \\ / / _ \\| |/ __/ _ \\<br>" +
+	"| |_/ / (_| |/ / (_| | (_| | |   \\ V / (_) | | (_|  __/<br>" +
+	"\\____/ \\__,_/___\\__,_|\\__,_|_|    \\_/ \\___/|_|\\___\\___|</pre><br><br>"
+
 var (
 	tracer          opentracing.Tracer
+	colour          string
 	heavyLiftingOps = promauto.NewCounter(prometheus.CounterOpts{
 		Name: "myfirstserverlessapp_heavyLifting_calls",
 		Help: "The total number of heavyLifting calls",
@@ -69,7 +78,9 @@ func initJaeger(service string) (opentracing.Tracer, io.Closer) {
 
 func handler(w http.ResponseWriter, r *http.Request) {
 
-	fmt.Fprintf(w, bvHeader)
+	fmt.Fprintf(w, "<html><body><p><font color=%s>", colour)
+	fmt.Fprintf(w, bvHeaderHtml)
+	fmt.Fprintf(w, "</font></p>")
 
 	bigPrime, err := parseIn(r)
 	if err != nil {
@@ -91,9 +102,9 @@ func handler(w http.ResponseWriter, r *http.Request) {
 
 	a, b, c, err := heavyLifting(bigPrime, nap, processes)
 
-	fmt.Fprintf(w, "Method A calculated the highest prime below %d as %d\n", bigPrime, a)
-	fmt.Fprintf(w, "Method B napped for %d seconds\n", b)
-	fmt.Fprintf(w, "Method C calculated pi as %f using %d processes\n\n", c, processes)
+	fmt.Fprintf(w, "<p>Method A calculated the highest prime below %d as %d<br>", bigPrime, a)
+	fmt.Fprintf(w, "<p>Method B napped for %d seconds<br>", b)
+	fmt.Fprintf(w, "<p>Method C calculated pi as %f using %d processes<br><br></p></body><html>", c, processes)
 }
 
 /*
@@ -260,6 +271,11 @@ func main() {
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
+	}
+
+	colour = os.Getenv("COLOUR")
+	if colour == "" {
+		colour = "blue"
 	}
 
 	http.Handle("/metrics", promhttp.Handler())
