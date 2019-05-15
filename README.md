@@ -118,7 +118,7 @@ Load the app for 2 minutes using (knative takes a minute to establish avg concur
 cd go/src
 export GOPATH=$(pwd)
 go get -u github.com/rakyll/hey
-hey -z 120s -c 11 -host myfirstserverlessapp.hackathon-pi-knative.eu-west-1a.bosun.qa.bazaarvoice.com 'http://a75b17d82762711e99ce20a36548629d-390961240.eu-west-1.elb.amazonaws.com/?in=100000&nap=9&processes=500
+hey -z 120s -c 11 -host ${KNATIVE_DOMAIN} "http://${KNATIVE_HOST}/?in=100000&nap=3&processes=5000"
 ```
 
 Knative should autoscale the replicas (up to a max of 10):
