@@ -163,4 +163,5 @@ edit the route again only this time setting the traffic % to 50-50
 send requests using Postman - you can see the logo colour change.
 ```
 
+![alt text](images/green-app.png "Green coloured app")
 
