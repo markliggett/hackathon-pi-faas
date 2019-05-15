@@ -23,7 +23,7 @@ For deploying | testing | loading:
 
 ## BUILDING
 
-### Build the app image_(optional)_
+### Build the app image _(optional)_
 This build uses a multi-stage build, where a container is used to build the app before it is copied to a `scratch` container
 ```
 docker build . -t <my-dockerhub-username>/myfirstserverlessapp:v0.1
