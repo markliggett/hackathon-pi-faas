@@ -6,10 +6,11 @@ What I did in advance:
  - Installed Istio and Knative onto a running Bosun cluster following https://istio.io/docs/setup/kubernetes/install/kubernetes/ and https://knative.dev/v0.3-docs/install/
 
 What this project contains:
-  - A primative go-lang web app called `myfirstserverlessapp` which includes 3 delegating methods that have tracing enabled (Openjaeger/Zipkin)
+  - A primative go-lang web app called `myfirstserverlessapp` which includes 3 delegating methods that have tracing enabled (Openjaeger/Zipkin), it also supports the passing of an `COLOUR` environment variable that is used in the app response.
   - A multi-stage docker build that creates a primative go-lang web-app container
   - Some Kubernetes files that publish the web-app to a knative-enabled cluster
   - Tooling around calling the loading the web-app in order for it to autoscale (from zero to 10 replicas)
+  - Tooling and options around traffic engineering, in this instance the percentage of traffic that is routed to the app based on its version
 
 ## PRE-REQS
 
@@ -43,7 +44,7 @@ docker push <my-dockerhub-username>/myfirstserverlessapp:v0.1
 
 ### Create an Istio enabled Kubernetes namespace (Admins only!)
 ```
-kubectl create -f hackathon-pi-knative-ns.yml
+kubectl apply -f hackathon-pi-knative-ns.yml
 ```
 Alternatively label an existing namespace for Istio Injection.
 ```
@@ -54,7 +55,7 @@ _NOTE: For this hackathon the namespace `hackathon-pi-knative` is used._
 
 ### Deploy the app using knative
 ```
-kubectl create -f hackathon-pi-knative-svc.yml
+kubectl apply -f hackathon-pi-knative-svc.yml
 ```
 
 ## TESTING
@@ -88,7 +89,7 @@ With a bit of luck the FaaS should respond, eg;
 
 ![alt text](images/blue-app.png "Blue coloured app")
 
-## LOADING
+## AUTOSCALING
 
 The knative service is configured with a artifical target concurrency of 1 - knative should scale the app (by adding more replicas) if it recieves more than 1 concurrent request.  Approximately 30 seconds after requests stop, knative will scale the app to zero instances.
 
@@ -133,7 +134,7 @@ kubectl port-forward --namespace knative-monitoring $(kubectl get pods --namespa
 --selector=app=grafana --output=jsonpath="{.items..metadata.name}") 3000
 ```
 Then navigate to http://localhost:3000 and look at the `Deployment` dashboard:
-![alt text](images/grafana-scaling.png "Grafana show replicas increase under load")
+![alt text](images/grafana-scaling.png "Grafana showings replica count increase under load")
 
 Approximately 30 seconds after loading the web-app you will see the replicas scale to zero:
 ```
@@ -143,25 +144,58 @@ myfirstserverlessapp-9mq4l-deployment-7f5cd97f44-97mn4   3/3     Running        
 myfirstserverlessapp-9mq4l-deployment-7f5cd97f44-hth4c   2/3     Terminating       0          3m
 myfirstserverlessapp-9mq4l-deployment-7f5cd97f44-k6gtn   2/3     Terminating       0          3m
 myfirstserverlessapp-9mq4l-deployment-7f5cd97f44-rx2sc   2/3     Terminating       0          3m
-myfirstserverlessapp-nhlm8-deployment-6f8d75794f-kzr96   0/3     PodInitializing   0          33s
 ```
 
-//TODO (ML)
-Switch between instance using the a percentage of traffic...
+## TRAFFIC ENGINEERING
 
+Knative can take advantage of the Istio service mesh to engineer traffic routed to the serverless app.
+
+First remove the running Knative service used above (if applicable):
 ```
-kubectl apply -f k8s/hackathon-pi-config-v1.yml
-get configuration revision from kubectl describe config myfirstserverlessapp
-kubectl apply -f k8s/hackathon-pi-route.yml
-kubectl apply -f k8s/hackathon-pi-config-v2.yml
-get new ready configuration revision from kubectl describe config myfirstserverlessapp
-kubectl edit route adding something like:
-  - revisionName: myfirstserverlessapp-vtf5g
-    percent: 0
+kubectl delete -f hackathon-pi-knative-svc.yml
+```
+
+Create a `v1` configuration for the app:
+```
+kubectl apply -f hackathon-pi-config-v1.yml
+```
+
+Once accepted this will generate a configuration with a unique `revision` for the application.  The `revision` can be found by calling:
+```
+kubectl describe config myfirstserverlessapp
+```
+
+Traffic can be routed to this particular `revision` using a Knative route.  Modify the file `k8s/hackathon-pi-route.yml` to suit the generated `revision` then apply using:
+```
+kubectl apply -f hackathon-pi-route.yml
+```
+
+At this point, sending a Postman/browser request to the serverless app will result in a blue response (same as the image above).
+
+Once confirmed create a new `v2` configuration.  Note, no traffic will be sent to the `v2` configuration as no route is configured.
+```
+kubectl apply -f hackathon-pi-config-v1.yml
+```
+
+Determine the new `revision` in the same manner as earlier:
+```
+kubectl describe config myfirstserverlessapp
+```
+
+Traffic can now be directed to the revision by editing the existing route (either via a direct `kubectl edit route myfirstserverlessapp` or by modifying `k8s/hackathon-pi-route.yml` and re-applying).  For example:
+```yaml
+<output-snipped>
+  traffic:
+  - revisionName: v1Placeholder
+    percent: 50
+    name: v1
+  - revisionName: v1Placeholder
+    percent: 50
     name: v2
-edit the route again only this time setting the traffic % to 50-50
-send requests using Postman - you can see the logo colour change.
 ```
+
+After applying this change, sending a Postman/browser request to the serverless app will result in a logo colour change with every other request:
 
 ![alt text](images/green-app.png "Green coloured app")
 
+More useful Knative revision information can be found here - https://github.com/knative/serving/blob/master/docs/spec/normative_examples.md
